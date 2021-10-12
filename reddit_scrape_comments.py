@@ -1,6 +1,6 @@
 import json
 import os
-import pprint
+import pathlib
 
 import dotenv
 import praw
@@ -30,6 +30,9 @@ COMMENT_FIELDS = [
 
 
 def main():
+    comments_dir = pathlib.Path.cwd() / 'comments'
+    comments_dir.mkdir(exist_ok=True)
+
     dotenv.load_dotenv()
 
     if not os.environ.get('client_id'):
@@ -50,10 +53,13 @@ def main():
     submission = reddit.submission(url=URL)
 
     print(f'Fetched submission {submission.id}')
-
+    
     print('Unpacking comment forest')
 
     submission.comments.replace_more(limit=None)
+
+    print('Comment forest unpacked')
+
     for i, comment in enumerate(submission.comments.list()):
         filename = f'comments/{comment.id}.json'
         
@@ -63,6 +69,8 @@ def main():
             comment_data['author'] = vars(comment.author).get('name')
         else:
             comment_data['author'] = None
+
+        print(f'Writing {comment.id} to {filename}')
         
         with open(filename, 'w') as f:
             json.dump(comment_data, f, sort_keys=True)
@@ -71,5 +79,4 @@ def main():
 
 
 if __name__ == '__main__':
-    rv = main()
-    print(rv)
+    print(main())
